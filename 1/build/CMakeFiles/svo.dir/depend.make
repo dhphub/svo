@@ -87,6 +87,9 @@ CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/shape/emdL1.hpp
 CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/shape/hist_cost.hpp
 CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/shape/shape_distance.hpp
 CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/shape/shape_transformer.hpp
+CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/stereo.hpp
+CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/stereo/descriptor.hpp
+CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/stereo/matching.hpp
 CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/stitching.hpp
 CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/stitching/detail/blenders.hpp
 CMakeFiles/svo.dir/src/svomain.cpp.o: /usr/local/include/opencv2/stitching/detail/camera.hpp

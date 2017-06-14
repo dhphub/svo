@@ -88,6 +88,9 @@ CMakeFiles/svo.dir/src/svomain.cpp.o
  /usr/local/include/opencv2/shape/hist_cost.hpp
  /usr/local/include/opencv2/shape/shape_distance.hpp
  /usr/local/include/opencv2/shape/shape_transformer.hpp
+ /usr/local/include/opencv2/stereo.hpp
+ /usr/local/include/opencv2/stereo/descriptor.hpp
+ /usr/local/include/opencv2/stereo/matching.hpp
  /usr/local/include/opencv2/stitching.hpp
  /usr/local/include/opencv2/stitching/detail/blenders.hpp
  /usr/local/include/opencv2/stitching/detail/camera.hpp

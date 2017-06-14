@@ -40,8 +40,16 @@ int main(int argc,char** argv){
     }
 
     cv::Mat disMap_1,disMap_2;
-    getDisMap(inImage_1_left,inImage_1_right,disMap_1);
-    getDisMap(inImage_2_left,inImage_2_right,disMap_2);
+    getDismapSGBM(inImage_1_left,inImage_1_right,disMap_1);
+    getDismapSGBM(inImage_2_left,inImage_2_right,disMap_2);
+    cv::Mat dis_show;
+    disMap_1.convertTo(dis_show,CV_8U,255/(numberOfDisparities*16.));
+    imshow("SGBM origin dismap",disMap_1);
+    imshow("DisparityMap",dis_show);
+    cv::waitKey(0);
+    disMap_2.convertTo(dis_show,CV_8U,255/(numberOfDisparities*16.));
+    imshow("DisparityMap",dis_show);
+
 
     vector<Point2f>keypoints_left_1,keypoints_left_2;
     vector<uchar> status;
@@ -59,16 +67,37 @@ int main(int argc,char** argv){
 
     vector<Point3f> pts3d_1,pts3d_2;
     cv::Mat R,t;
-    getDisMap(inImage_1_left,inImage_1_right,disMap_1);
-    getDisMap(inImage_2_left,inImage_2_right,disMap_2);
-    get3dPairs(disMap_1,disMap_2,keypoints_left_1,keypoints_left_2,pts3d_1,pts3d_2);
+    //getDismapSGBM(inImage_1_left,inImage_1_right,disMap_1);
+    //getDismapSGBM(inImage_2_left,inImage_2_right,disMap_2);
+
+    //const Mat K = (Mat_<double>(3,3)<<718.85,0,607.19,0,718.85,185.21,0,0,1);
+    //const cv::Mat distCoeffs=Mat(1,5,CV_32FC1,Scalar::all(0));
+    //const cv::Mat distCoeffs2=Mat(1,5,CV_32FC1,Scalar::all(0));
+    //const cv::Mat leftRright = (Mat_<double>(3,3)<<1,0,0,0,1,0,0,0,1);
+    //const cv::Mat leftTright = (Mat_<double>(3,1)<<0.5371,0,0);
+    cv::Mat _3dPointsImage_1,_3dPointsImage_2;
+
+    //cv::Mat R1,R2,P1,P2,Q;
+    //stereoRectify(K,distCoeffs1,K,distCoeffs2,Size(inImage_1_left.rows,inImage_1_left.cols),leftRright,leftTright,R1,R2,P1,P2,Q);
+    //cout<<"Perspective Matrix is"<<Q<<endl;
+    cv::waitKey(0);
+    cv::Mat mat_1,mat_2;
+    reprojectImageTo3D(disMap_1,mat_1,Q,true);
+    reprojectImageTo3D(disMap_2,mat_2,Q,true);
+    cout<<"Reproject to 3d done"<<endl;
+
+    _get3dPairs(mat_1, mat_2, keypoints_left_1, keypoints_left_2, pts3d_1, pts3d_2);
+    cout<<"3d pairs:"<<pts3d_1.size()<<"-"<<pts3d_2.size()<<endl;
+    /*
     for(int i=0;i<pts3d_1.size();i++){
         cout<<pts3d_1.at(i).x<<endl;
         cout<<pts3d_1.at(i).y<<endl;
         cout<<pts3d_1.at(i).z<<endl;
     }
+    */
     getPose3d3d(pts3d_1,pts3d_2,R,t);
-    Mat traj(1600, 1600, CV_8UC3,Scalar(255,255,255));
+    Mat traj(800, 800, CV_8UC3,Scalar(0,0,0));
+
     cv::Mat R_f,t_f;
     R_f = R.clone();
     t_f = t.clone();
@@ -79,11 +108,13 @@ int main(int argc,char** argv){
     cv::Mat currDismap;
     vector<Point2f> prevFeatures = keypoints_left_2;
 
+    /*
     cv::Vec3f prevPosition;
     prevPosition[0]= 0;
     prevPosition[1] = 0;
     prevPosition[2] = 0;
-    cv::Mat positionMat = (Mat_<double>(3,1)<<prevPosition[0],prevPosition[1],prevPosition[2]);
+    */
+    //cv::Mat positionMat = (Mat_<double>(3,1)<<prevPosition[0],prevPosition[1],prevPosition[2]);
 
     //cv::Mat currImage;
     clock_t begin = clock();
@@ -104,26 +135,12 @@ int main(int argc,char** argv){
         if(!currImage_l.data || !currImage_r.data){
             cout<<"Errors read stereo images"<<endl;
         }
-        getDisMap(currImage_l,currImage_r,currDismap);
+        getDismapSGBM(currImage_l,currImage_r,currDismap);
+        currDismap.convertTo(dis_show,CV_8U,255/(numberOfDisparities*16.));
+        imshow("DisparityMap",dis_show);
         cout<<"Disparity map done"<<endl;
         featureTracking(prevImage, currImage_l, prevFeatures, currFeatures, status);
 
-        Mat img_show = currImage_l.clone();
-        for ( auto kp:currFeatures )
-            cv::circle(img_show, kp, 2, cv::Scalar(0, 240, 0), 2);
-        cv::imshow("Motion Corners", img_show);
-        cv::waitKey(0);
-        cv::imshow("Right Images",currImage_r);
-        get3dPairs(prevDismap,currDismap,prevFeatures,currFeatures,pts3d_1,pts3d_2);
-        getPose3d3d(pts3d_1,pts3d_2,R,t);
-
-        //absolute orientation
-        //cv::Mat positionMat = (Mat_(3,1)<<prevPosition[0],prevPosition[1],prevPosition[2]);
-        R_f = R*R_f;
-        t_f = t_f + R*t;
-        positionMat = R_f*positionMat + t_f;
-
-        //redetect features if feature num less than the thresold
         if(prevFeatures.size() < MIN_FEAT_NUM){
             featureDetection(prevImage,prevFeatures);
             featureTracking(prevImage,currImage_l,prevFeatures,currFeatures,status);
@@ -133,8 +150,37 @@ int main(int argc,char** argv){
             cv::imshow("Motion Corners", img_show);
         }
 
+        Mat img_show = currImage_l.clone();
+        for ( auto kp:currFeatures )
+            cv::circle(img_show, kp, 2, cv::Scalar(0, 240, 0), 2);
+        cv::imshow("Motion Corners", img_show);
+        cv::waitKey(0);
+        cv::imshow("Right Images",currImage_r);
+        //get3dPairs(prevDismap,currDismap,prevFeatures,currFeatures,pts3d_1,pts3d_2);
+        reprojectImageTo3D(prevDismap,mat_1,Q,true);
+        reprojectImageTo3D(currDismap,mat_2,Q,true);
+        vector<Point3f> pts3d_1,pts3d_2;
+        _get3dPairs(mat_1, mat_2, prevFeatures, currFeatures, pts3d_1 ,pts3d_2);
+
+
+
+        cout<<"2d features is:"<<prevFeatures.size()<<"-"<<currFeatures.size()<<endl;
+        cout<<"3d Pairs:"<<pts3d_1.size()<<"-"<<pts3d_2.size()<<endl;
+        getPose3d3d(pts3d_1,pts3d_2,R,t);
+
+        //absolute orientation
+        //cv::Mat positionMat = (Mat_(3,1)<<prevPosition[0],prevPosition[1],prevPosition[2]);
+        //R_f = R*R_f;
+        t_f = t_f + R_f*t;
+        R_f = R*R_f;
+        //positionMat = R_f*positionMat + t_f;
+
+        //redetect features if feature num less than the thresold
+
+
         prevImage = currImage_l.clone();
         prevFeatures = currFeatures;
+        prevDismap = currDismap.clone();
         //drawTrajectory(traj,R,t);
 
         int x = int(t_f.at<double>(0)) + 300;
@@ -143,7 +189,7 @@ int main(int argc,char** argv){
         char text[200];
         circle(traj,Point(x,y),1,CV_RGB(0,255,0),2);
         rectangle(traj,Point(10,30),Point(550,50),CV_RGB(0,0,0),CV_FILLED);
-        sprintf(text, "Coordinates: x = %02fm y = %02fm z = %02fm", positionMat.at<double>(0,0), positionMat.at<double>(1,0), positionMat.at<double>(2,0));
+        sprintf(text, "Coordinates: x = %02fm y = %02fm z = %02fm", t_f.at<double>(0), t_f.at<double>(1), t_f.at<double>(2));
         putText(traj, text, textOrg, fontFace, fontScale, Scalar::all(255), thickness, 8);
         imshow( "Trajectory", traj );
     }
